@@ -1,23 +1,24 @@
 ARG SERVICE
 
 # builder
-FROM golang:1.21-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 ARG SERVICE
 
-RUN apk add --no-cache protoc curl
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.alpine.sh' | sudo -E bash
-RUN apk add task
+RUN apk add --no-cache curl protobuf
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/task/task/setup.alpine.sh' | /bin/sh
+RUN apk add --no-cache task
 
 WORKDIR /app
 
 COPY go.mod go.sum Taskfile.yml ./
 COPY proto/ ./proto/
+RUN task install-tools
 RUN task generate
 RUN go mod download
 
 COPY ${SERVICE}/ ./service/
-WORKDIR /app/${SERVICE}
+WORKDIR /app/service
 RUN go build -o bin .
 
 # runtime
