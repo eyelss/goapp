@@ -1,0 +1,18 @@
+
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "goapp/user";
+
+service User {
+  rpc Check(UserRequest) returns(UserResponse);
+}
+
+message UserRequest {
+  string req = 1;
+}
+
+message UserResponse {
+  string res = 1;
+}

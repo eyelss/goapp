@@ -1,0 +1,18 @@
+
+syntax = "proto3";
+
+package product.v1;
+
+option go_package = "goapp/product";
+
+service User {
+  rpc Check(ProductRequest) returns(ProductResponse);
+}
+
+message ProductRequest {
+  string req = 1;
+}
+
+message ProductResponse {
+  string res = 1;
+}

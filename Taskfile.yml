@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  FOLDER_PROTO: proto
+  FOLDER_GENERATE: gen
+
+tasks:
+  install-tools:
+    desc: Install protoc plugin dependencies
+    cmds:
+      - go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+      - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+  generate:
+    desc: Generates all proto entities
+    cmds:
+      - mkdir -p {{.FOLDER_GENERATE}}
+      - protoc
+        --proto_path={{.FOLDER_PROTO}}
+        --go_out={{.FOLDER_GENERATE}}
+        --go-grpc_out={{.FOLDER_GENERATE}}
+        {{.FOLDER_PROTO}}/*.proto
+
+  generate:*:
+    desc: Generate proto entities
+    vars:
+      SERVICE: '{{index .MATCH 0}}'
+    cmds:
+      - mkdir -p {{.FOLDER_GENERATE}}
+      - protoc
+          --proto_path={{.FOLDER_PROTO}}
+          --go_out={{.FOLDER_GENERATE}}
+          --go-grpc_out={{.FOLDER_GENERATE}}
+          {{.FOLDER_PROTO}}/{{.SERVICE}}.proto
+
+  clean:
+    desc: Clean gen folder
+    cmds:
+      - rm -rf {{.FOLDER_GENERATE}}/*
