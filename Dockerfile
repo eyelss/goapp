@@ -25,6 +25,7 @@ RUN go build -o bin .
 FROM alpine:latest
 
 ARG SERVICE
+ENV SERVICE=${SERVICE}
 
 WORKDIR /root/
 COPY --from=builder /app/service/bin .

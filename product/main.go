@@ -27,6 +27,7 @@ func (s *productServer) Check(ctx context.Context, in *productpb.ProductRequest)
 		log.Fatalf("could not connect users service: %v", err)
 	}
 	defer conn.Close()
+	
 	c := userpb.NewUserClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -41,7 +42,7 @@ func (s *productServer) Check(ctx context.Context, in *productpb.ProductRequest)
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":50050")
+	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
