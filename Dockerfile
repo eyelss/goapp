@@ -36,5 +36,5 @@ RUN if [ "$DEBUG"="true" ]; then \
       apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing grpcurl; \
     fi
 
-EXPOSE 50051
+EXPOSE ${PORT}
 CMD ["./bin"]
