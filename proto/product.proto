@@ -5,7 +5,7 @@ package product.v1;
 
 option go_package = "goapp/product";
 
-service User {
+service Product {
   rpc Check(ProductRequest) returns(ProductResponse);
 }
 

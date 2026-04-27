@@ -15,7 +15,7 @@ type userServer struct {
 }
 
 func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb.UserResponse, error) {
-	log.Printf("Received: %v", in.GetReq())
+	log.Printf("Received: %v (User)", in.GetReq())
 
 	return &userpb.UserResponse{Res: "OK: " + in.GetReq()}, nil
 }
