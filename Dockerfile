@@ -18,6 +18,7 @@ RUN task generate
 RUN go mod download
 
 COPY ${SERVICE}/ ./service/
+COPY framework/ ./framework/
 WORKDIR /app/service
 RUN go build -o bin .
 

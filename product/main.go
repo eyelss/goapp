@@ -2,15 +2,11 @@ package main
 
 import (
 	"context"
+	"goapp/framework"
 	productpb "goapp/gen/goapp/product"
 	userpb "goapp/gen/goapp/user"
 	"log"
-	"net"
 	"time"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
 )
 
 type productServer struct {
@@ -20,18 +16,19 @@ type productServer struct {
 func (s *productServer) Check(ctx context.Context, in *productpb.ProductRequest) (*productpb.ProductResponse, error) {
 	log.Printf("Received: %v (Product)", in.GetReq())
 
-	conn, err := grpc.NewClient(
-		"localhost:50051",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := framework.Connect("user")
+
 	if err != nil {
 		log.Fatalf("could not connect users service: %v", err)
 	}
+
 	defer conn.Close()
-	
+
 	c := userpb.NewUserClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+
 	r, err := c.Check(ctx, &userpb.UserRequest{Req: in.GetReq()})
 	if err != nil {
 		log.Fatalf("could not check user: %v", err)
@@ -42,16 +39,9 @@ func (s *productServer) Check(ctx context.Context, in *productpb.ProductRequest)
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	server := grpc.NewServer()
+	listener, server := framework.Load()
 
 	productpb.RegisterProductServer(server, &productServer{})
-
-	reflection.Register(server)
 
 	log.Printf("server listening at %v", listener.Addr())
 	if err := server.Serve(listener); err != nil {

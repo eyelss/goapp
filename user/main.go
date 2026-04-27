@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
+	"goapp/framework"
 	userpb "goapp/gen/goapp/user"
 	"log"
-	"net"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 type userServer struct {
@@ -21,16 +18,9 @@ func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	server := grpc.NewServer()
+	listener, server := framework.Load()
 
 	userpb.RegisterUserServer(server, &userServer{})
-
-	reflection.Register(server)
 
 	log.Printf("server listening at %v", listener.Addr())
 	if err := server.Serve(listener); err != nil {

@@ -11,25 +11,24 @@ type AppConfig struct {
 	Port int `yaml:"port"`
 }
 
-func setDefault() {
+func setDefaultConfig() {
 	viper.SetDefault("port", 50051)
+	viper.SetDefault("debug", false)
 }
 
 func loadConfig() {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
 
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
-	}
+	viper.ReadInConfig()
 
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config file changed:", e.Name)
 	})
 
-	setDefault()
+	viper.AutomaticEnv()
+
+	setDefaultConfig()
 
 	viper.WatchConfig()
 }
