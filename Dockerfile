@@ -31,5 +31,10 @@ ENV SERVICE=${SERVICE}
 WORKDIR /root/
 COPY --from=builder /app/service/bin .
 
+RUN if [ "$DEBUG"="true" ]; then \
+      apk add --no-cache curl nano vim; \
+      apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing grpcurl; \
+    fi
+
 EXPOSE 50051
 CMD ["./bin"]
