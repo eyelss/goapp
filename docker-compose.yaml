@@ -1,0 +1,34 @@
+x-service-base: &service-base
+  build:
+    context: .
+    args:
+      SERVICE: ~
+  restart: unless-stopped
+  networks:
+    - backend
+  env_file:
+    - path: ./default.env
+      required: true
+
+services:
+  user:
+    <<: *service-base
+    build:
+      args:
+        SERVICE: user
+  product:
+    <<: *service-base
+    build:
+      args:
+        SERVICE: product
+    ports:
+      - "50051:50051"
+
+networks:
+  backend:
+    driver: bridge
+
+configs:
+  app_config:
+    content: |
+      test=12345
