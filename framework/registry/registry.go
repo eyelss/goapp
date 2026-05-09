@@ -4,7 +4,7 @@ import "context"
 
 type ServiceID = string
 
-type ServiceInstancee struct {
+type ServiceInstance struct {
 	ID      ServiceID
 	Name    string
 	Address string
@@ -12,7 +12,7 @@ type ServiceInstancee struct {
 }
 
 type IRegistry interface {
-	Register(ctx context.Context, instance ServiceInstancee) error
+	Register(ctx context.Context, instance ServiceInstance) error
 	Unregister(ctx context.Context, instanceID ServiceID) error
 	Close() error
 }

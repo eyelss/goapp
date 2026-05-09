@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"goapp/framework"
+	"goapp/framework/registry"
+	"goapp/framework/server"
 	userpb "goapp/gen/goapp/user"
 	"log"
 )
@@ -18,12 +19,23 @@ func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb
 }
 
 func main() {
-	listener, server := framework.Load()
+	consulRegistry, err := registry.NewConsulRegistry("localhost:8500")
 
-	userpb.RegisterUserServer(server, &userServer{})
-
-	log.Printf("server listening at %v", listener.Addr())
-	if err := server.Serve(listener); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	srv, err := server.New(
+		server.WithName("user"),
+		server.WithAddr("localhost:50051"),
+		server.WithRegistry(consulRegistry),
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	userpb.RegisterUserServer(srv, &userServer{})
+
+	server.Run(srv)
 }

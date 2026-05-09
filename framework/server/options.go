@@ -12,7 +12,7 @@ type Options struct {
 	ServiceAddr        string
 	Registry           registry.IRegistry
 	RegistryInterval   time.Duration
-	RequestTimeout     time.Duration
+	GracefulTimeout    time.Duration
 	ServiceOptions     []grpc.ServerOption
 	UnaryInterceptors  []grpc.UnaryServerInterceptor
 	StreamInterceptors []grpc.StreamServerInterceptor
@@ -20,10 +20,18 @@ type Options struct {
 
 type Option func(*Options)
 
+func WithName(name string) Option {
+	return func(o *Options) { o.ServiceName = name }
+}
+
+func WithAddr(addr string) Option {
+	return func(o *Options) { o.ServiceAddr = addr }
+}
+
 func WithRegistry(reg registry.IRegistry) Option {
 	return func(o *Options) { o.Registry = reg }
 }
 
 func WithTimeout(timeout time.Duration) Option {
-	return func(o *Options) { o.RegistryInterval = timeout }
+	return func(o *Options) { o.GracefulTimeout = timeout }
 }

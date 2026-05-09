@@ -35,7 +35,7 @@ func GetServiceID() registry.ServiceID {
 func New(opts ...Option) (*Server, error) {
 	o := &Options{
 		RegistryInterval: 60 * time.Second,
-		RequestTimeout:   15 * time.Second,
+		GracefulTimeout:  15 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -72,6 +72,10 @@ func New(opts ...Option) (*Server, error) {
 	return server, nil
 }
 
+func (s *Server) RegisterService(sd *grpc.ServiceDesc, impl interface{}) {
+	s.grpc.RegisterService(sd, impl)
+}
+
 func (s *Server) Start(ctx context.Context) error {
 	s.mutex.Lock()
 
@@ -90,7 +94,7 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	if s.opts.Registry != nil {
-		instance := registry.ServiceInstancee{
+		instance := registry.ServiceInstance{
 			ID:      s.instanceID,
 			Name:    s.opts.ServiceName,
 			Address: s.opts.ServiceAddr,
@@ -122,7 +126,7 @@ func (s *Server) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) waitForShutdown(ctx context.Context) error {
+func (s *Server) waitForShutdown() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -147,7 +151,7 @@ func (s *Server) Stop() {
 	if s.opts.Registry != nil && s.regCancel != nil {
 		s.regCancel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), s.opts.RequestTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), s.opts.GracefulTimeout)
 
 		defer cancel()
 
@@ -163,13 +167,13 @@ func (s *Server) Stop() {
 		select {
 		case <-stopChannel:
 		// expected done
-		case <-time.After(s.opts.RequestTimeout):
+		case <-time.After(s.opts.GracefulTimeout):
 			s.grpc.Stop() // force
 		}
 	}
 }
 
-func (s *Server) syncRegisterProcess(ctx context.Context, instance registry.ServiceInstancee) {
+func (s *Server) syncRegisterProcess(ctx context.Context, instance registry.ServiceInstance) {
 	ticker := time.NewTicker(s.opts.RegistryInterval)
 	defer ticker.Stop()
 
