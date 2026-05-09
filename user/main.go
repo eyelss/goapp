@@ -19,7 +19,7 @@ func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb
 }
 
 func main() {
-	consulRegistry, err := registry.NewConsulRegistry("localhost:8500")
+	consulRegistry, err := registry.NewConsulRegistry("consul:8500")
 
 	if err != nil {
 		log.Fatal(err)
@@ -27,7 +27,7 @@ func main() {
 
 	srv, err := server.New(
 		server.WithName("user"),
-		server.WithAddr("localhost:50051"),
+		server.WithAddr(":50051"),
 		server.WithRegistry(consulRegistry),
 	)
 

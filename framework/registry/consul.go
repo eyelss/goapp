@@ -24,7 +24,7 @@ func (c *ConsulRegistry) Register(ctx context.Context, instance ServiceInstance)
 	registration := &api.AgentServiceRegistration{
 		ID:      instance.ID,
 		Name:    instance.Name,
-		Address: instance.Address,
+		Address: instance.Name + instance.Address,
 		Port:    parsePort(instance.Address),
 		Meta:    instance.Meta,
 		Check: &api.AgentServiceCheck{
@@ -44,5 +44,5 @@ func (c *ConsulRegistry) Unregister(ctx context.Context, instanceID ServiceID) e
 func (c *ConsulRegistry) Close() error { return nil }
 
 func parsePort(address string) int {
-	return 50051
+	return 8500
 }
