@@ -17,7 +17,7 @@ RUN task install-tools
 RUN task generate
 RUN go mod download
 
-COPY ${SERVICE}/ ./service/
+COPY ./services/${SERVICE}/ ./service/
 COPY framework/ ./framework/
 WORKDIR /app/service
 RUN go build -o bin .
@@ -30,6 +30,7 @@ ENV SERVICE=${SERVICE}
 
 WORKDIR /root/
 COPY --from=builder /app/service/bin .
+COPY --from=builder /app/service/config.yml .
 
 RUN if [ "$DEBUG"="true" ]; then \
       apk add --no-cache curl nano vim; \

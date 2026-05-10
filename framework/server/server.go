@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
+	config "goapp/framework/lib"
 	"goapp/framework/registry"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -33,9 +35,17 @@ func GetServiceID() registry.ServiceID {
 }
 
 func New(opts ...Option) (*Server, error) {
+	config.Load()
+
+	addr := config.Get[string]("addr")
+	name := config.Get[string]("app-name")
+
 	o := &Options{
 		RegistryInterval: 60 * time.Second,
 		GracefulTimeout:  15 * time.Second,
+		Registry:         registry.NewStubRegistry(),
+		ServiceAddr:      addr,
+		ServiceName:      name,
 	}
 
 	for _, opt := range opts {
@@ -43,14 +53,6 @@ func New(opts ...Option) (*Server, error) {
 	}
 
 	serviceID := GetServiceID()
-
-	if o.ServiceName == "" {
-		return nil, fmt.Errorf("service name is required")
-	}
-
-	if o.ServiceAddr == "" {
-		return nil, fmt.Errorf("service address is required")
-	}
 
 	serverOpts := append(o.ServiceOptions,
 		grpc.ChainUnaryInterceptor(o.UnaryInterceptors...),
@@ -76,6 +78,26 @@ func (s *Server) RegisterService(sd *grpc.ServiceDesc, impl interface{}) {
 	s.grpc.RegisterService(sd, impl)
 }
 
+func getIP() (string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "", err
+	}
+	ips, err := net.LookupHost(hostname)
+	if err != nil {
+		return "", err
+	}
+	if len(ips) == 0 {
+		return "", fmt.Errorf("no IP found for hostname %s", hostname)
+	}
+	for _, ip := range ips {
+		if net.ParseIP(ip).To4() != nil {
+			return ip, nil
+		}
+	}
+	return "", fmt.Errorf("IPv4 not found")
+}
+
 func (s *Server) Start(ctx context.Context) error {
 	s.mutex.Lock()
 
@@ -93,11 +115,13 @@ func (s *Server) Start(ctx context.Context) error {
 		return fmt.Errorf("could not listen on socket: %w", err)
 	}
 
+	ip, _ := getIP()
+
 	if s.opts.Registry != nil {
 		instance := registry.ServiceInstance{
 			ID:      s.instanceID,
 			Name:    s.opts.ServiceName,
-			Address: s.opts.ServiceAddr,
+			Address: ip,
 			Meta: map[string]string{
 				"started_at": time.Now().UTC().String(),
 			},
@@ -105,7 +129,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 		if err := s.opts.Registry.Register(ctx, instance); err != nil {
 			listener.Close()
-			return fmt.Errorf("could not register service: %w", err)
+			fmt.Errorf("could not register service: %w", err)
 		}
 
 		// periodic heartbeat
@@ -119,9 +143,13 @@ func (s *Server) Start(ctx context.Context) error {
 
 	go func() {
 		if err := s.grpc.Serve(listener); err != nil {
-
+			fmt.Printf("could not start grpc server: %v\n", err)
 		}
 	}()
+
+	log.Printf("server listening at %v", listener.Addr())
+
+	//go s.waitForShutdown()
 
 	return nil
 }
@@ -129,6 +157,7 @@ func (s *Server) Start(ctx context.Context) error {
 func (s *Server) waitForShutdown() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	<-quit
 
 	s.Stop()
@@ -155,6 +184,7 @@ func (s *Server) Stop() {
 
 		defer cancel()
 
+		log.Printf("Stopping service: %s", s.opts.ServiceName)
 		_ = s.opts.Registry.Unregister(ctx, s.instanceID)
 		_ = s.opts.Registry.Close()
 
@@ -170,6 +200,8 @@ func (s *Server) Stop() {
 		case <-time.After(s.opts.GracefulTimeout):
 			s.grpc.Stop() // force
 		}
+
+		os.Exit(0)
 	}
 }
 

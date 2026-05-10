@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"goapp/framework/registry"
+	"goapp/framework/lib/kafka"
 	"goapp/framework/server"
 	userpb "goapp/gen/goapp/user"
 	"log"
@@ -19,17 +19,7 @@ func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb
 }
 
 func main() {
-	consulRegistry, err := registry.NewConsulRegistry("consul:8500")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	srv, err := server.New(
-		server.WithName("user"),
-		server.WithAddr(":50051"),
-		server.WithRegistry(consulRegistry),
-	)
+	srv, err := server.New()
 
 	if err != nil {
 		log.Fatal(err)
@@ -38,4 +28,10 @@ func main() {
 	userpb.RegisterUserServer(srv, &userServer{})
 
 	server.Run(srv)
+
+	log.Println("Before")
+	kafka.Write("some-topic")
+	log.Println("After")
+
+	select {}
 }
