@@ -133,9 +133,9 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 
 		// periodic heartbeat
-		var registerContext context.Context
-		registerContext, s.regCancel = context.WithCancel(context.Background())
-		go s.syncRegisterProcess(registerContext, instance)
+		//var registerContext context.Context
+		//registerContext, s.regCancel = context.WithCancel(context.Background())
+		//go s.syncRegisterProcess(registerContext, instance)
 	}
 
 	s.health.SetServingStatus(s.opts.ServiceName, healthpb.HealthCheckResponse_SERVING)

@@ -8,33 +8,50 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func getConnection(topic string, partition int) (*kafka.Conn, error) {
-	kafkaAddr := config.Get[string]("kafka.address")
+type Message = kafka.Message
 
-	return kafka.DialLeader(context.Background(), "tcp", kafkaAddr, topic, partition)
+type EnqMessage[T any] struct {
+	Key   []byte
+	Value T
 }
 
-func Write(topic string) {
+func Publish(topic Topic, messages ...Message) error {
 	ctx := context.Background()
 
 	kafkaAddress := config.Get[string]("kafka-addr")
 	writer := kafka.Writer{
-		Addr:                   kafka.TCP(kafkaAddress),
-		Topic:                  topic,
-		Balancer:               &kafka.LeastBytes{},
-		AllowAutoTopicCreation: true,
+		Addr:     kafka.TCP(kafkaAddress),
+		Topic:    string(topic),
+		Balancer: &kafka.LeastBytes{},
 	}
 
-	err := writer.WriteMessages(ctx,
-		kafka.Message{
-			Key:   []byte("Key-A"),
-			Value: []byte("Value-A"),
-		},
-	)
+	ProtoSerializer{}.Encode(messages)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	err := writer.WriteMessages(ctx, messages...)
 
-	log.Print("Kafka wrote")
+	return err
+}
+
+func Listen(topic Topic, handler func(Message)) {
+	kafkaAddress := config.Get[string]("kafka-addr")
+	appName := config.Get[string]("app-name")
+
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		GroupID:  appName,
+		Brokers:  []string{kafkaAddress},
+		Topic:    string(topic),
+		MaxBytes: 10e6,
+	})
+
+	go func() {
+		for {
+			m, err := reader.ReadMessage(context.Background())
+
+			if err != nil {
+				log.Printf("error reading kafka message: %s\n", err)
+			} else {
+				handler(m)
+			}
+		}
+	}()
 }

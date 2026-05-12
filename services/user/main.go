@@ -6,6 +6,7 @@ import (
 	"goapp/framework/server"
 	userpb "goapp/gen/goapp/user"
 	"log"
+	"time"
 )
 
 type userServer struct {
@@ -29,9 +30,22 @@ func main() {
 
 	server.Run(srv)
 
-	log.Println("Before")
-	kafka.Write("some-topic")
-	log.Println("After")
+	kafka.Listen(kafka.Basic, func(message kafka.Message) {
+		log.Printf("GOT MESSAGE: %v\n", message.Topic)
+		log.Printf("%s => %s", string(message.Key), string(message.Value))
+	})
+
+	time.Sleep(time.Second * 15)
+
+	log.Println("Publishing message!")
+	errp := kafka.Publish(kafka.Basic, kafka.Message{
+		Key:   []byte("some-key"),
+		Value: []byte("some-value"),
+	})
+
+	if errp != nil {
+		log.Fatal(errp)
+	}
 
 	select {}
 }

@@ -20,6 +20,10 @@ services:
     build:
       args:
         SERVICE: user
+    deploy:
+      mode: replicated
+      replicas: 2
+      endpoint_mode: dnsrr
   product:
     <<: *service-base
     build:
@@ -28,9 +32,7 @@ services:
     ports:
       - "50051:50051"
   kafka:
-    image: apache/kafka-native
-    ports:
-      - "9092:9092"
+    image: apache/kafka
     environment:
       KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093

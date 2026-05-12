@@ -49,3 +49,9 @@ func Get[T any](key string) T {
 
 	return r
 }
+
+func TryGet[T any](key string) (T, bool) {
+	r, ok := viper.Get(key).(T)
+
+	return r, ok
+}
