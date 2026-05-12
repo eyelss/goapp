@@ -30,15 +30,16 @@ func main() {
 
 	server.Run(srv)
 
-	kafka.Listen(kafka.Basic, func(message kafka.Message) {
+	kafka.ReadMessage(kafka.Basic, func(message kafka.Message) {
 		log.Printf("GOT MESSAGE: %v\n", message.Topic)
 		log.Printf("%s => %s", string(message.Key), string(message.Value))
+	}, func(err error) {
+		log.Printf("error reading kafka message: %s\n", err)
 	})
 
 	time.Sleep(time.Second * 15)
 
-	log.Println("Publishing message!")
-	errp := kafka.Publish(kafka.Basic, kafka.Message{
+	errp := kafka.WriteMessage(kafka.Basic, kafka.Message{
 		Key:   []byte("some-key"),
 		Value: []byte("some-value"),
 	})

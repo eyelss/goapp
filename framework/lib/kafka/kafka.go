@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	config "goapp/framework/lib"
-	"log"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -15,7 +14,7 @@ type EnqMessage[T any] struct {
 	Value T
 }
 
-func Publish(topic Topic, messages ...Message) error {
+func WriteMessage(topic Topic, messages ...Message) error {
 	ctx := context.Background()
 
 	kafkaAddress := config.Get[string]("kafka-addr")
@@ -25,14 +24,16 @@ func Publish(topic Topic, messages ...Message) error {
 		Balancer: &kafka.LeastBytes{},
 	}
 
-	ProtoSerializer{}.Encode(messages)
-
 	err := writer.WriteMessages(ctx, messages...)
 
 	return err
 }
 
-func Listen(topic Topic, handler func(Message)) {
+func ReadMessage(
+	topic Topic,
+	messageHandler func(Message),
+	errorHandler func(error),
+) {
 	kafkaAddress := config.Get[string]("kafka-addr")
 	appName := config.Get[string]("app-name")
 
@@ -48,9 +49,9 @@ func Listen(topic Topic, handler func(Message)) {
 			m, err := reader.ReadMessage(context.Background())
 
 			if err != nil {
-				log.Printf("error reading kafka message: %s\n", err)
+				errorHandler(err)
 			} else {
-				handler(m)
+				messageHandler(m)
 			}
 		}
 	}()
