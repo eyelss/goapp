@@ -34,7 +34,6 @@ tasks:
           --go_out={{.FOLDER_GENERATE}}
           --go-grpc_out={{.FOLDER_GENERATE}}
           {{.FOLDER_PROTO}}/{{.SERVICE}}.proto
-
   clean:
     desc: Clean gen folder
     cmds:

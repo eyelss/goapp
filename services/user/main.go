@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"goapp/framework/lib/kafka"
 	"goapp/framework/server"
+	"goapp/framework/server/grpc"
 	userpb "goapp/gen/goapp/user"
 	"log"
 	"time"
@@ -20,7 +20,7 @@ func (s *userServer) Check(ctx context.Context, in *userpb.UserRequest) (*userpb
 }
 
 func main() {
-	srv, err := server.New()
+	srv, err := grpc.New()
 
 	if err != nil {
 		log.Fatal(err)
@@ -30,23 +30,23 @@ func main() {
 
 	server.Run(srv)
 
-	kafka.ReadMessage(kafka.Basic, func(message kafka.Message) {
-		log.Printf("GOT MESSAGE: %v\n", message.Topic)
-		log.Printf("%s => %s", string(message.Key), string(message.Value))
-	}, func(err error) {
-		log.Printf("error reading kafka message: %s\n", err)
-	})
+	//kafka.ReadMessage(kafka.Basic, func(message kafka.Message) {
+	//	log.Printf("GOT MESSAGE: %v\n", message.Topic)
+	//	log.Printf("%s => %s", string(message.Key), string(message.Value))
+	//}, func(err error) {
+	//	log.Printf("error reading kafka message: %s\n", err)
+	//})
 
 	time.Sleep(time.Second * 15)
 
-	errp := kafka.WriteMessage(kafka.Basic, kafka.Message{
-		Key:   []byte("some-key"),
-		Value: []byte("some-value"),
-	})
+	//errp := kafka.WriteMessage(kafka.Basic, kafka.Message{
+	//	Key:   []byte("some-key"),
+	//	Value: []byte("some-value"),
+	//})
 
-	if errp != nil {
-		log.Fatal(errp)
-	}
+	//if errp != nil {
+	//	log.Fatal(errp)
+	//}
 
 	select {}
 }

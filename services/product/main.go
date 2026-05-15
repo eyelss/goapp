@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"goapp/framework/server"
+	"goapp/framework/server/grpc"
 	productpb "goapp/gen/goapp/product"
 	"log"
 )
@@ -18,7 +19,7 @@ func (s *productServer) Check(ctx context.Context, in *productpb.ProductRequest)
 }
 
 func main() {
-	srv, err := server.New()
+	srv, err := grpc.New()
 
 	if err != nil {
 		log.Fatal(err)
