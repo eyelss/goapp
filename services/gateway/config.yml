@@ -1,1 +1,2 @@
 app-name: gateway
+addr: ":8080"

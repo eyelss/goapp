@@ -17,8 +17,8 @@ RUN task install-tools
 RUN task generate
 RUN go mod download
 
-COPY ./services/${SERVICE}/ ./service/
 COPY framework/ ./framework/
+COPY ./services/${SERVICE}/ ./service/
 WORKDIR /app/service
 RUN go build -o bin .
 

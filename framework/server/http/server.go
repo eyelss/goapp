@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	config "goapp/framework/lib"
 	"goapp/framework/registry"
 	"log"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
-	"github.com/labstack/echo/v5/middleware"
 )
 
 type Server struct {
@@ -27,12 +27,22 @@ type Server struct {
 }
 
 func New(opts ...Option) (*Server, error) {
-	echo := echo.New()
+	config.Load()
 
-	echo.Use(middleware.RequestLogger())
+	e := echo.New()
+
+	o := &Options{
+		ServiceName: config.Get[string]("app-name"),
+		ServiceAddr: config.Get[string]("addr"),
+	}
+
+	for _, opt := range opts {
+		opt(o)
+	}
 
 	return &Server{
-		Echo: echo,
+		Echo: e,
+		opts: *o,
 	}, nil
 }
 
@@ -49,7 +59,7 @@ func (s *Server) Start() error {
 
 	s.mutex.Unlock()
 
-	httpSrv := http.Server{Addr: ":8080", Handler: s.Echo}
+	httpSrv := http.Server{Addr: s.opts.ServiceAddr, Handler: s.Echo}
 
 	go func() {
 		if err := httpSrv.ListenAndServe(); err != nil {
