@@ -3,62 +3,76 @@ x-service-base: &service-base
     context: .
     args:
       SERVICE: ~
-#  restart: on-failure:5
+  #  restart: on-failure:5
   restart: unless-stopped
   networks:
     - backend
   env_file:
-    - path: ./default.env
+    - path: default.env
       required: true
-  depends_on:
-    kafka:
-      condition: service_started
+#  depends_on:
+#    kafka:
+#      condition: service_started
 
 services:
   user:
     <<: *service-base
     build:
+      dockerfile: Dockerfile.go
       args:
         SERVICE: user
-    deploy:
-      mode: replicated
-      replicas: 2
-      endpoint_mode: dnsrr
+    #    deploy:
+    #      mode: replicated
+    #      replicas: 2
+    #      endpoint_mode: dnsrr
   product:
     <<: *service-base
     build:
+      dockerfile: Dockerfile.go
       args:
         SERVICE: product
-    ports:
-      - "50051:50051"
   gateway:
     <<: *service-base
     build:
+      dockerfile: Dockerfile.go
       args:
         SERVICE: gateway
-  kafka:
-    image: apache/kafka
-    environment:
-      KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
-
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
-
-      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
-
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      - backend
+    ports:
+      - 8080:8080
+    volumes:
+      - dist:/root/dist:ro
+    depends_on:
+      - frontend
+  frontend:
+    <<: *service-base
+    restart: on-failure
+    build:
+      dockerfile: Dockerfile.frontend
+      args:
+        SERVICE: frontend
+    volumes:
+      - dist:/app/dist
+#  kafka:
+#    image: apache/kafka
+#    environment:
+#      KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
+#      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
+#
+#      KAFKA_NODE_ID: 1
+#      KAFKA_PROCESS_ROLES: broker,controller
+#      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+#      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
+#
+#      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+#
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#    networks:
+#      - backend
 
 networks:
   backend:
     driver: bridge
 
-configs:
-  app_config:
-    content: |
-      test=12345
+volumes:
+  dist:

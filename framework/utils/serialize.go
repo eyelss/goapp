@@ -1,4 +1,4 @@
-package kafka
+package utils
 
 import (
 	"google.golang.org/protobuf/proto"
