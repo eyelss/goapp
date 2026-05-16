@@ -1,7 +1,5 @@
 ARG SERVICE
 
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
 FROM node:22-alpine AS builder
 ARG SERVICE
 
